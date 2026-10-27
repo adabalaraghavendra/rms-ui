@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import api, { errMsg, money, thisMonth } from '../../api/client';
 import ExpenseForm from '../../components/ExpenseForm';
+import Pagination from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function MyExpenses() {
   const [month, setMonth] = useState(thisMonth());
+  const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [summary, setSummary] = useState(null);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
@@ -12,12 +17,13 @@ export default function MyExpenses() {
   const load = useCallback(async () => {
     try {
       const [e, s] = await Promise.all([
-        api.get('/expenses/mine', { params: { month } }),
+        api.get('/expenses/mine', { params: { month, page, page_size: PAGE_SIZE } }),
         api.get('/summary/mine', { params: { month } }),
       ]);
-      setRows(e.data); setSummary(s.data); setError('');
+      if (!e.data.length && page > 1) return setPage(page - 1); // last item of the page was removed
+      setRows(e.data); setPagination(e.pagination); setSummary(s.data); setError('');
     } catch (err) { setError(errMsg(err)); }
-  }, [month]);
+  }, [month, page]);
   useEffect(() => { load(); }, [load]);
 
   const remove = async (id) => {
@@ -29,7 +35,7 @@ export default function MyExpenses() {
     <>
       <div className="row between">
         <h2>My Expenses</h2>
-        <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+        <input type="month" value={month} onChange={(e) => { setMonth(e.target.value); setPage(1); }} />
       </div>
       {error && <p className="error">{error}</p>}
 
@@ -41,7 +47,7 @@ export default function MyExpenses() {
 
       {editing
         ? <ExpenseForm key={editing.id} initial={editing} onSaved={() => { setEditing(null); load(); }} onCancel={() => setEditing(null)} />
-        : <ExpenseForm onSaved={load} />}
+        : <ExpenseForm onSaved={() => { setPage(1); load(); }} />}
 
       <div className="card">
         <table>
@@ -60,6 +66,7 @@ export default function MyExpenses() {
             {!rows.length && <tr><td colSpan="5" className="muted center">No expenses this month</td></tr>}
           </tbody>
         </table>
+        <Pagination pagination={pagination} onPage={setPage} />
       </div>
     </>
   );

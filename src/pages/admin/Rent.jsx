@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api, { errMsg, money, thisMonth } from '../../api/client';
+import api, { ALL, errMsg, money, thisMonth } from '../../api/client';
 
 export default function AdminRent() {
   const [month, setMonth] = useState(thisMonth());
@@ -12,8 +12,7 @@ export default function AdminRent() {
   const [msg, setMsg] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    api.get('/users').then((r) => setUsers(r.data.filter((u) => u.is_active))).catch((e) => setMsg({ type: 'error', text: errMsg(e) }));
-    api.get('/room').then((r) => setTotal((t) => t || String(Number(r.data.monthly_rent) || ''))).catch(() => {});
+    api.get('/users', { params: ALL }).then((r) => setUsers(r.data.filter((u) => u.is_active))).catch((e) => setMsg({ type: 'error', text: errMsg(e) }));
   }, []);
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export default function AdminRent() {
         userIds: payers.map((u) => u.id),
         shares: mode === 'custom' ? payers.map((u) => ({ userId: u.id, amount: Number(shares[u.id]) || 0 })) : [],
       });
-      await api.patch('/room', { monthlyRent: Number(total) });
       setMsg({ type: 'ok', text: 'Rent split saved' });
       const r = await api.get('/rent', { params: { month } });
       setSaved(r.data.split);

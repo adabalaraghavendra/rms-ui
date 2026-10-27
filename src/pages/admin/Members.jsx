@@ -1,19 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api, { errMsg } from '../../api/client';
+import Pagination from '../../components/Pagination';
 import { useAuth } from '../../context/AuthContext';
+
+const PAGE_SIZE = 10;
+const EMPTY = { name: '', email: '', password: '', role: 'user' };
 
 export default function AdminMembers() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
-  const [f, setF] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
+  const [f, setF] = useState(EMPTY);
   const [error, setError] = useState('');
-  const load = () => api.get('/users').then((r) => setUsers(r.data)).catch((e) => setError(errMsg(e)));
-  useEffect(() => { load(); }, []);
+
+  const load = useCallback(() => api.get('/users', { params: { page, page_size: PAGE_SIZE } })
+    .then((r) => {
+      if (!r.data.length && page > 1) return setPage(page - 1); // last member of the page was removed
+      setUsers(r.data); setPagination(r.pagination);
+    }).catch((e) => setError(errMsg(e))), [page]);
+  useEffect(() => { load(); }, [load]);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const add = async (e) => {
     e.preventDefault(); setError('');
-    try { await api.post('/users', f); setF({ name: '', email: '', password: '', role: 'user' }); load(); }
+    try { await api.post('/users', f); setF(EMPTY); load(); }
     catch (err) { setError(errMsg(err)); }
   };
   const toggle = async (u) => {
@@ -58,6 +69,7 @@ export default function AdminMembers() {
             ))}
           </tbody>
         </table>
+        <Pagination pagination={pagination} onPage={setPage} />
       </div>
     </>
   );

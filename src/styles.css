@@ -9,6 +9,7 @@ h2 { margin:0; } h3 { margin:0 0 4px; grid-column:1/-1; }
 .who { display:flex; align-items:center; gap:10px; font-size:14px; } .who em { color:#9ca3af; font-style:normal; }
 .content { max-width:1000px; margin:24px auto; padding:0 16px; display:flex; flex-direction:column; gap:16px; }
 .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; overflow-x:auto; }
+.pager { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap; }
 .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
 .wide { grid-column:1/-1; }
 label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
