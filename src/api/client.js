@@ -1,6 +1,23 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api' });
+function cleanApiUrl(input) {
+  let raw = (input || 'http://localhost:8000/api').trim();
+  if (!/^https?:\/\//i.test(raw)) {
+    if (/^https?\/\//i.test(raw)) {
+      raw = raw.replace(/^https?\/\//i, (m) => m.toLowerCase().startsWith('https') ? 'https://' : 'http://');
+    } else {
+      raw = `https://${raw}`;
+    }
+  }
+  raw = raw.replace(/(https?:\/\/)|(\/)+/g, (m, p) => p || '/');
+  raw = raw.replace(/\/+$/, '');
+  if (!raw.endsWith('/api')) {
+    raw = `${raw}/api`;
+  }
+  return raw;
+}
+
+const api = axios.create({ baseURL: cleanApiUrl(import.meta.env.VITE_API_URL) });
 
 api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('token');
